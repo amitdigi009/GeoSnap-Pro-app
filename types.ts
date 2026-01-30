@@ -4,6 +4,7 @@ export interface GeoData {
   longitude: number;
   address: string;
   placeName: string;
+  areaName?: string;
   timestamp: string;
   mapsUrl?: string;
   sources?: Array<{ title: string; uri: string }>;

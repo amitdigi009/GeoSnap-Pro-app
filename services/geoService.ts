@@ -20,17 +20,16 @@ export function startLocationTracking() {
   watcherId = navigator.geolocation.watchPosition(
     updateLocation,
     (err) => console.warn("Location Watcher Error:", err),
-    { enableHighAccuracy: true, maximumAge: 1000, timeout: 5000 }
+    { 
+      enableHighAccuracy: true, 
+      maximumAge: 0, // Force fresh data
+      timeout: 10000 
+    }
   );
 }
 
 export async function getCurrentGeoData(): Promise<{ latitude: number; longitude: number; timestamp: string }> {
-  // If we have a warm location, return it immediately
-  if (lastKnownLocation) {
-    return { ...lastKnownLocation };
-  }
-
-  // Fallback if tracker hasn't fired yet
+  // Always try to get a fresh position for capture
   return new Promise((resolve, reject) => {
     navigator.geolocation.getCurrentPosition(
       (pos) => {
@@ -46,8 +45,15 @@ export async function getCurrentGeoData(): Promise<{ latitude: number; longitude
         lastKnownLocation = data;
         resolve(data);
       },
-      (err) => reject(err),
-      { enableHighAccuracy: true, timeout: 3000 }
+      (err) => {
+        // If high accuracy fails or times out, use last known or reject
+        if (lastKnownLocation) {
+          resolve(lastKnownLocation);
+        } else {
+          reject(err);
+        }
+      },
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
     );
   });
 }

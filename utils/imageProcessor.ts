@@ -18,25 +18,26 @@ export async function applyGeoOverlay(imageSrc: string, geo: GeoData): Promise<s
       // 1. Render Base Frame
       ctx.drawImage(img, 0, 0);
 
-      // 2. Scale font based on resolution - User requested 35 * scale
+      // 2. Scale font based on resolution - Maintained at 20 * scale per request
       const baseDim = Math.min(canvas.width, canvas.height);
       const scale = baseDim / 1000;
       
-      const fontSize = 35 * scale; 
-      const padding = 35 * scale;
-      const lineSpacing = 1.3;
-      const radius = 16 * scale;
-      const margin = 40 * scale;
+      const fontSize = 20 * scale; 
+      const padding = 20 * scale;
+      const lineSpacing = 1.35;
+      const radius = 12 * scale;
+      const margin = 25 * scale;
 
-      // 3. Metadata Lines
+      // 3. Metadata Lines - Updated with specific user labels
       const lines = [
-        { text: `📍 ${geo.placeName || 'Site Location'}`, color: '#FFFFFF', weight: '900' },
-        { text: geo.address || 'Local Data Active', color: '#F3F4F6', weight: '500' },
-        { text: `GPS: ${geo.latitude.toFixed(6)}, ${geo.longitude.toFixed(6)}`, color: '#E5E7EB', weight: '500' },
-        { text: `DATE: ${geo.timestamp}`, color: '#D1D5DB', weight: '500' }
+        { text: `📍 PLACE AREA: ${geo.placeName.toUpperCase()}`, color: '#FFFFFF', weight: '900' },
+        { text: `LOCATION: ${(geo.areaName || "JALANDHAR").toUpperCase()}`, color: '#3B82F6', weight: '800' },
+        { text: geo.address, color: '#D1D5DB', weight: '500' },
+        { text: `GPS: ${geo.latitude.toFixed(6)}, ${geo.longitude.toFixed(6)}`, color: '#9CA3AF', weight: '500' },
+        { text: `DATE: ${geo.timestamp}`, color: '#9CA3AF', weight: '500' }
       ];
 
-      // 4. Measure Box
+      // 4. Measure Box Dimensions
       ctx.font = `900 ${fontSize}px "Inter", sans-serif`;
       let maxWidth = 0;
       lines.forEach(line => {
@@ -48,12 +49,13 @@ export async function applyGeoOverlay(imageSrc: string, geo: GeoData): Promise<s
       const boxW = maxWidth + (padding * 2);
       const boxH = (lines.length * fontSize * lineSpacing) + (padding * 1.5);
       
+      // Positioned on the right side (bottom-right)
       const boxX = canvas.width - boxW - margin;
       const boxY = canvas.height - boxH - margin;
 
-      // 5. High-Contrast Semi-Transparent Scrim
+      // 5. Professional Scrim
       ctx.save();
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
       ctx.beginPath();
       if (ctx.roundRect) {
         ctx.roundRect(boxX, boxY, boxW, boxH, radius);
@@ -63,7 +65,7 @@ export async function applyGeoOverlay(imageSrc: string, geo: GeoData): Promise<s
       ctx.fill();
       ctx.restore();
 
-      // 6. Draw Text
+      // 6. Draw Text Overlay
       ctx.textAlign = 'left';
       ctx.textBaseline = 'top';
       const textX = boxX + padding;
@@ -72,8 +74,8 @@ export async function applyGeoOverlay(imageSrc: string, geo: GeoData): Promise<s
         ctx.font = `${line.weight} ${fontSize}px "Inter", sans-serif`;
         ctx.fillStyle = line.color;
         
-        ctx.shadowColor = 'rgba(0,0,0,0.6)';
-        ctx.shadowBlur = 6 * scale;
+        ctx.shadowColor = 'rgba(0,0,0,0.5)';
+        ctx.shadowBlur = 4 * scale;
         
         ctx.fillText(
           line.text, 

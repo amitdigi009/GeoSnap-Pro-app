@@ -38,12 +38,16 @@ const App: React.FC = () => {
       }
       
       setProcessStatus("TAGGING...");
-      let geoInfo = { address: "Unknown Address", placeName: "Unknown Location" };
+      let geoInfo = { address: "Unknown Address", placeName: "Unknown Location", areaName: "Local Area" };
       
       if (coords.latitude !== 0 || coords.longitude !== 0) {
         try {
           const aiData = await reverseGeocodeAI(coords.latitude, coords.longitude);
-          geoInfo = { address: aiData.address, placeName: aiData.placeName };
+          geoInfo = { 
+            address: aiData.address, 
+            placeName: aiData.placeName,
+            areaName: aiData.areaName
+          };
         } catch (e) {
           console.warn("Geocoding failed, using coordinates only.");
         }
