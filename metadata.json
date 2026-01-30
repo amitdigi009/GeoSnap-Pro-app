@@ -1,0 +1,8 @@
+{
+  "name": "GeoSnap Pro",
+  "description": "A high-performance camera application that automatically overlays geolocation, address, and timestamp metadata onto your photos, with seamless Firebase integration and social sharing.",
+  "requestFramePermissions": [
+    "camera",
+    "geolocation"
+  ]
+}
