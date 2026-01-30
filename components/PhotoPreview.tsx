@@ -19,11 +19,11 @@ const PhotoPreview: React.FC<PhotoPreviewProps> = ({ photo, onDiscard, onSave })
       const blob = await response.blob();
       const file = new File([blob], `GeoSnap_${Date.now()}.jpg`, { type: 'image/jpeg' });
 
+      // Clean share: removed the 'text' property to satisfy the request
       if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
         await navigator.share({
           files: [file],
-          title: 'GeoSnap Pro Capture',
-          text: `Verified capture at ${photo.metadata.placeName}`
+          title: 'GeoSnap Pro'
         });
         onSave();
       } else {
@@ -92,7 +92,7 @@ const PhotoPreview: React.FC<PhotoPreviewProps> = ({ photo, onDiscard, onSave })
         )}
       </div>
 
-      {/* FLOATING SHARE BUTTON - MOVED TO BOTTOM LEFT */}
+      {/* FLOATING SHARE BUTTON */}
       <div className="absolute bottom-12 left-6 z-50">
         <button
           onClick={handleShare}
@@ -108,8 +108,6 @@ const PhotoPreview: React.FC<PhotoPreviewProps> = ({ photo, onDiscard, onSave })
           )}
         </button>
       </div>
-
-      {/* No text labels in footer area for a clean professional look */}
     </div>
   );
 };

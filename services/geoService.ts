@@ -8,11 +8,11 @@ export async function getCurrentGeoData(): Promise<{ latitude: number; longitude
       return;
     }
 
-    // High accuracy settings optimized for rapid capture
+    // High accuracy settings optimized for speed and battery
     const options = {
       enableHighAccuracy: true,
-      timeout: 10000,
-      maximumAge: 1000 // Allow 1-second old cache for faster response
+      timeout: 8000,
+      maximumAge: 5000 // Allow 5-second old cache for significantly faster response
     };
 
     navigator.geolocation.getCurrentPosition(
@@ -25,11 +25,8 @@ export async function getCurrentGeoData(): Promise<{ latitude: number; longitude
       },
       (error) => {
         console.error("Geolocation Error:", error);
-        
-        // Handle common GPS errors with specific instructions
         let message = "Please enable GPS/Location permissions.";
         if (error.code === error.TIMEOUT) message = "GPS signal weak. Try moving outdoors.";
-        
         reject(new Error(message));
       },
       options

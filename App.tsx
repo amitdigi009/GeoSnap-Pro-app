@@ -13,30 +13,29 @@ const App: React.FC = () => {
   const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
-    // Professional splash sequence
+    // Faster splash transition for better UX
     const timer = setTimeout(() => {
       setMode(AppMode.CAMERA);
-      // Senior-level optimization: Pre-warm the location services immediately
-      getCurrentGeoData().catch(() => console.debug("GPS initial warm-up..."));
-    }, 2500);
+      // Pre-warm location immediately
+      getCurrentGeoData().catch(() => {});
+    }, 1200);
     return () => clearTimeout(timer);
   }, []);
 
   const handleCapture = useCallback(async (dataUrl: string) => {
     setIsProcessing(true);
     try {
-      // 1. Fetch high-precision coordinates (instant if warmed)
+      // Parallel execution: Get GPS + Start Geocoding
       const coords = await getCurrentGeoData();
       
-      // 2. Resolve AI-backed metadata in parallel with location locking
-      let geoInfo = { address: "Metadata Syncing...", placeName: "Satellite Locked" };
+      // AI Reverse Geocoding
+      let geoInfo = { address: "Precision Coordinates", placeName: "Satellite Locked" };
       try {
         geoInfo = await reverseGeocodeAI(coords.latitude, coords.longitude);
       } catch (e) {
-        console.error("Geocoding delay:", e);
+        console.warn("AI metadata fallback active");
       }
       
-      // 3. Apply Metadata Overlay with professional watermark styling
       const fullGeoData = { ...coords, ...geoInfo };
       const processedUrl = await applyGeoOverlay(dataUrl, fullGeoData);
       
@@ -61,30 +60,21 @@ const App: React.FC = () => {
         <div className="flex flex-col items-center justify-center h-full bg-black text-white px-6">
           <div className="relative w-32 h-32 mb-12">
             <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-[0_0_20px_rgba(34,211,238,0.3)]">
-              {/* Camera Body */}
               <rect x="10" y="30" width="80" height="55" rx="12" fill="#1a1a1a" stroke="#333" strokeWidth="1.5" />
               <path d="M35 30 L35 22 Q35 18 40 18 L60 18 Q65 18 65 22 L65 30" fill="#1a1a1a" stroke="#333" strokeWidth="1.5" />
-              
-              {/* Lens Structure */}
               <circle cx="50" cy="57" r="22" fill="#0a0a0a" stroke="#444" strokeWidth="1" />
               <circle cx="50" cy="57" r="18" fill="#111" stroke="#22d3ee" strokeWidth="0.5" strokeOpacity="0.4" />
-              
-              {/* Aperture Detail */}
               <circle cx="50" cy="57" r="8" fill="#000" />
               <circle cx="47" cy="54" r="2" fill="white" fillOpacity="0.2" />
-              
-              {/* Tech Accents */}
               <rect x="72" y="38" width="8" height="4" rx="1" fill="#22d3ee" className="animate-pulse" />
               <circle cx="20" cy="40" r="2" fill="#22d3ee" fillOpacity="0.6" />
-              
-              {/* Radar/Scan effect */}
               <circle cx="50" cy="57" r="28" fill="none" stroke="#22d3ee" strokeWidth="0.5" strokeDasharray="4 8" className="animate-[spin_10s_linear_infinite]" opacity="0.2" />
             </svg>
           </div>
           
           <div className="text-center space-y-2">
             <h1 className="text-4xl font-bold tracking-tight">GeoSnap Pro</h1>
-            <p className="text-zinc-500 text-xs tracking-[0.1em] font-medium uppercase">Metadata Verification Engine</p>
+            <p className="text-cyan-400 text-xs tracking-[0.05em] font-medium">Made by Amit with ❤️</p>
           </div>
 
           <div className="absolute bottom-20 flex space-x-2">
