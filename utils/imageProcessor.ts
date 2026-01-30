@@ -7,91 +7,84 @@ export async function applyGeoOverlay(imageSrc: string, geo: GeoData): Promise<s
     img.crossOrigin = "anonymous";
     img.onload = () => {
       const canvas = document.createElement('canvas');
-      // Maintain native aspect ratio for high-fidelity capture
       canvas.width = img.width;
       canvas.height = img.height;
       const ctx = canvas.getContext('2d');
       if (!ctx) {
-        reject(new Error("Failed to get canvas context"));
+        reject(new Error("Canvas context failure"));
         return;
       }
 
-      // 1. Draw original high-res capture
+      // 1. Render Base Frame
       ctx.drawImage(img, 0, 0);
 
-      // 2. Metadata Scale Calculation
-      // Target a 'professional small' look relative to image resolution.
-      const scale = canvas.height / 1080; 
-      const fontSize = 13 * scale; // Reduced for "small font" requirement
-      const padding = 16 * scale;
-      const lineSpacing = 1.35;
-      const radius = 6 * scale;
+      // 2. Scale font based on resolution - User requested 35 * scale
+      const baseDim = Math.min(canvas.width, canvas.height);
+      const scale = baseDim / 1000;
+      
+      const fontSize = 35 * scale; 
+      const padding = 35 * scale;
+      const lineSpacing = 1.3;
+      const radius = 16 * scale;
+      const margin = 40 * scale;
 
-      // 3. Define Metadata Lines
+      // 3. Metadata Lines
       const lines = [
-        { text: `📍 ${geo.placeName}`, color: '#FFFFFF', weight: '600' },
-        { text: geo.address, color: '#E5E7EB', weight: '400' },
-        { text: `${geo.latitude.toFixed(6)}, ${geo.longitude.toFixed(6)}`, color: '#D1D5DB', weight: '400' },
-        { text: geo.timestamp, color: '#9CA3AF', weight: '400' }
+        { text: `📍 ${geo.placeName || 'Site Location'}`, color: '#FFFFFF', weight: '900' },
+        { text: geo.address || 'Local Data Active', color: '#F3F4F6', weight: '500' },
+        { text: `GPS: ${geo.latitude.toFixed(6)}, ${geo.longitude.toFixed(6)}`, color: '#E5E7EB', weight: '500' },
+        { text: `DATE: ${geo.timestamp}`, color: '#D1D5DB', weight: '500' }
       ];
 
-      // 4. Measuring for Layout
-      ctx.font = `600 ${fontSize}px "Inter", -apple-system, sans-serif`;
-      let maxLineWidth = 0;
+      // 4. Measure Box
+      ctx.font = `900 ${fontSize}px "Inter", sans-serif`;
+      let maxWidth = 0;
       lines.forEach(line => {
+        ctx.font = `${line.weight} ${fontSize}px "Inter", sans-serif`;
         const width = ctx.measureText(line.text).width;
-        if (width > maxLineWidth) maxLineWidth = width;
+        if (width > maxWidth) maxWidth = width;
       });
 
-      const boxWidth = maxLineWidth + (padding * 2);
-      const boxHeight = (lines.length * fontSize * lineSpacing) + (padding * 1.0);
+      const boxW = maxWidth + (padding * 2);
+      const boxH = (lines.length * fontSize * lineSpacing) + (padding * 1.5);
       
-      // Bottom-Right Anchoring with tight margins
-      const margin = 20 * scale;
-      const boxX = canvas.width - boxWidth - margin;
-      const boxY = canvas.height - boxHeight - margin;
+      const boxX = canvas.width - boxW - margin;
+      const boxY = canvas.height - boxH - margin;
 
-      // 5. Sophisticated Frosted Backdrop
+      // 5. High-Contrast Semi-Transparent Scrim
       ctx.save();
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
-      ctx.shadowColor = 'rgba(0, 0, 0, 0.2)';
-      ctx.shadowBlur = 10 * scale;
-      
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
       ctx.beginPath();
-      ctx.roundRect(boxX, boxY, boxWidth, boxHeight, radius);
+      if (ctx.roundRect) {
+        ctx.roundRect(boxX, boxY, boxW, boxH, radius);
+      } else {
+        ctx.rect(boxX, boxY, boxW, boxH);
+      }
       ctx.fill();
-
-      // Sharp glass border for premium look
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
-      ctx.lineWidth = 0.5 * scale;
-      ctx.stroke();
       ctx.restore();
 
-      // 6. Metadata Text Rendering (Right-Aligned)
-      ctx.textAlign = 'right';
+      // 6. Draw Text
+      ctx.textAlign = 'left';
       ctx.textBaseline = 'top';
-      
-      const textX = canvas.width - margin - padding; 
+      const textX = boxX + padding;
 
-      lines.forEach((line, index) => {
-        ctx.font = `${line.weight} ${fontSize}px "Inter", -apple-system, sans-serif`;
+      lines.forEach((line, i) => {
+        ctx.font = `${line.weight} ${fontSize}px "Inter", sans-serif`;
         ctx.fillStyle = line.color;
         
-        // High-contrast protection for readability on any background
         ctx.shadowColor = 'rgba(0,0,0,0.6)';
-        ctx.shadowBlur = 2 * scale;
+        ctx.shadowBlur = 6 * scale;
         
         ctx.fillText(
-          line.text,
-          textX,
-          boxY + (padding * 0.5) + (index * fontSize * lineSpacing)
+          line.text, 
+          textX, 
+          boxY + (padding * 0.75) + (i * fontSize * lineSpacing)
         );
       });
 
-      // Output high-quality JPEG
       resolve(canvas.toDataURL('image/jpeg', 0.95));
     };
-    img.onerror = () => reject(new Error("Image load error"));
+    img.onerror = () => reject(new Error("Base image load failure"));
     img.src = imageSrc;
   });
 }

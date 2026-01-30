@@ -1,35 +1,53 @@
 
-import { GeoData } from '../types';
+let lastKnownLocation: { latitude: number; longitude: number; timestamp: string } | null = null;
+let watcherId: number | null = null;
+
+export function startLocationTracking() {
+  if (watcherId !== null || !navigator.geolocation) return;
+
+  const updateLocation = (pos: GeolocationPosition) => {
+    lastKnownLocation = {
+      latitude: pos.coords.latitude,
+      longitude: pos.coords.longitude,
+      timestamp: new Date().toLocaleString('en-IN', {
+        day: '2-digit', month: '2-digit', year: 'numeric',
+        hour: '2-digit', minute: '2-digit', second: '2-digit',
+        hour12: false
+      })
+    };
+  };
+
+  watcherId = navigator.geolocation.watchPosition(
+    updateLocation,
+    (err) => console.warn("Location Watcher Error:", err),
+    { enableHighAccuracy: true, maximumAge: 1000, timeout: 5000 }
+  );
+}
 
 export async function getCurrentGeoData(): Promise<{ latitude: number; longitude: number; timestamp: string }> {
+  // If we have a warm location, return it immediately
+  if (lastKnownLocation) {
+    return { ...lastKnownLocation };
+  }
+
+  // Fallback if tracker hasn't fired yet
   return new Promise((resolve, reject) => {
-    if (!navigator.geolocation) {
-      reject(new Error("Location services not supported."));
-      return;
-    }
-
-    // High accuracy settings optimized for speed and battery
-    const options = {
-      enableHighAccuracy: true,
-      timeout: 8000,
-      maximumAge: 5000 // Allow 5-second old cache for significantly faster response
-    };
-
     navigator.geolocation.getCurrentPosition(
-      (position) => {
-        resolve({
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-          timestamp: new Date().toLocaleString()
-        });
+      (pos) => {
+        const data = {
+          latitude: pos.coords.latitude,
+          longitude: pos.coords.longitude,
+          timestamp: new Date().toLocaleString('en-IN', {
+            day: '2-digit', month: '2-digit', year: 'numeric',
+            hour: '2-digit', minute: '2-digit', second: '2-digit',
+            hour12: false
+          })
+        };
+        lastKnownLocation = data;
+        resolve(data);
       },
-      (error) => {
-        console.error("Geolocation Error:", error);
-        let message = "Please enable GPS/Location permissions.";
-        if (error.code === error.TIMEOUT) message = "GPS signal weak. Try moving outdoors.";
-        reject(new Error(message));
-      },
-      options
+      (err) => reject(err),
+      { enableHighAccuracy: true, timeout: 3000 }
     );
   });
 }
